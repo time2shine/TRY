@@ -1,5 +1,4 @@
 import random
-import googleapiclient.discovery
 import datetime
 import yt_dlp
 import os
@@ -19,10 +18,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# --- TIME ---
-now = datetime.datetime.now()
-
-
 # --- Check cookies file exists ---
 if not os.path.exists(cookies_file_path):
     raise FileNotFoundError(f"Missing cookies file: {cookies_file_path}")
@@ -40,7 +35,8 @@ def get_user_agent():
     )
 
 
-def get_stream_url(url):
+def get_live_video_url(channel_id):
+    url = f"https://www.youtube.com/channel/{channel_id}/live"
     ydl_opts = {
         'format': 'best',
         'cookiefile': cookies_file_path,
@@ -59,137 +55,28 @@ def get_stream_url(url):
         'no_warnings': True
     }
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return next(
-                (fmt['manifest_url'] for fmt in info['formats']
-                 if fmt.get('protocol') in ['m3u8', 'm3u8_native']),
-                None
-            )
-    except Exception as e:
-        logger.error(f"Failed to get stream URL for {url}: {e}")
-        return None
-
-
-def get_youtube_service(api_key):
-    return googleapiclient.discovery.build("youtube", "v3", developerKey=api_key)
-
-
-def get_latest_live_link(youtube, channel_id):
-    for attempt in range(1, MAX_API_RETRIES + 1):
-        try:
-            request = youtube.search().list(
-                part="id",
-                channelId=channel_id,
-                eventType="live",
-                type="video",
-                order="date",
-                maxResults=1
-            )
-            response = request.execute()
-            items = response.get('items')
-            if items:
-                video_id = items[0]['id']['videoId']
-                return f"https://www.youtube.com/watch?v={video_id}"
-            return None
-        except Exception as e:
-            logger.warning(f"API error on attempt {attempt} for {channel_id}: {e}")
-            if attempt < MAX_API_RETRIES:
-                time.sleep(RETRY_WAIT_SECONDS)
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        # If live video is active, yt-dlp gives info about that video
+        if info and 'url' in info:
+            return info['url']
+        # Sometimes info['entries'] contains the video list
+        if info and 'entries' in info and len(info['entries']) > 0:
+            return info['entries'][0]['url']
     return None
 
 
-def format_live_link(channel_name, channel_logo, m3u8_link, channel_number, group_title):
-    return (
-        f'#EXTINF:-1 tvg-chno="{channel_number}" tvg-name="{channel_name}" '
-        f'tvg-id="" group-title="{group_title}" tvg-logo="{channel_logo}" tvg-epg="", '
-        f'{channel_name}\n{m3u8_link}'
-    )
-
-
-def save_m3u_file(output_data, base_filename="YT_playlist"):
-    filename = f"{base_filename}.m3u"
-
-    with open(filename, "w", encoding="utf-8") as file:
-        file.write("#EXTM3U\n")
-        file.write(f"# Updated on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        for data in output_data:
-            file.write(data + "\n")
-    logger.info(f"M3U playlist saved as {filename}")
-
-
-
-# Your channel metadata dictionary
-channel_metadata = {
-    # --- News Channels (Bangladesh) ---
-    'UCWVqdPTigfQ-cSNwG7O9MeA': {  # EKHON TV
-        'channel_number': 103,
+# Example channels dictionary (use your full list here)
+channels = {
+    'UCxHoBXkY88Tb8z1Ssj6CWsQ': {  # Somoy News
+        'channel_number': 101,
         'group_title': 'News',
-        'channel_name': 'EKHON TV',
-        'channel_logo': 'https://yt3.googleusercontent.com/66cO7vPXs2Xssf6fq2cn90oDsJ3OFMThb57qfRkRMjaSqg3ouTG6m9WQKZFg6GmUS5G8wkPu7ik=s72-c-k-c0x00ffffff-no-rj',
+        'channel_name': 'Somoy News',
+        'channel_logo': 'https://yt3.googleusercontent.com/7F-3_9yjPiMJzBAuD7niglcJmFyXCrFGSEugcEroFrIkxudmhiZ9i-Q_pW4Zrn2IiCLN5dQX8A=s160-c-k-c0x00ffffff-no-rj',
     },
-    'UCHLqIOMPk20w-6cFgkA90jw': {  # Channel 24
-        'channel_number': 104,
-        'group_title': 'News',
-        'channel_name': 'Channel 24',
-        'channel_logo': 'https://yt3.googleusercontent.com/8Q8MCd6ypr2Hzbp60VE_stJPl063kQYfeTxdIQkAXRfhdzxByLl0sJYHsk43uTM4W_cOzwcbPQ=s160-c-k-c0x00ffffff-no-rj',
-    },
-    'UCtqvtAVmad5zywaziN6CbfA': {  # Ekattor TV
-        'channel_number': 105,
-        'group_title': 'News',
-        'channel_name': 'Ekattor TV',
-        'channel_logo': 'https://yt3.googleusercontent.com/M8Rqad6_uN86mMSvd9KGkE5G2mrVAgvfTV-VCsQb6jhfF5hEbcQCEJiInih4wb2fMQ_RG7Ku=s160-c-k-c0x00ffffff-no-rj',
-    },
+    # Add other channels as needed...
 }
 
-
-def main(api_key):
-    youtube = get_youtube_service(api_key)
-    output_data = []
-
-    for channel_id, metadata in channel_metadata.items():
-        channel_number = metadata.get('channel_number', '0')
-        group_title = metadata.get('group_title', 'Others')
-        channel_name = metadata.get('channel_name', 'Unknown')
-        channel_logo = metadata.get('channel_logo', '')
-
-        logger.info(f"Checking channel: {channel_name}")
-
-        live_link = get_latest_live_link(youtube, channel_id)
-        if not live_link:
-            logger.warning(f"Skipping {channel_name}: no live video found")
-            continue
-
-        m3u8_link = get_stream_url(live_link)
-        if not m3u8_link:
-            logger.warning(f"Skipping {channel_name}: no stream link found")
-            continue
-
-        formatted_info = format_live_link(
-            channel_name, channel_logo, m3u8_link, channel_number, group_title
-        )
-        output_data.append(formatted_info)
-
-    if output_data:
-        save_m3u_file(output_data)
-    else:
-        logger.warning("No live streams found for any channels.")
-
-
-if __name__ == "__main__":
-    if 2 <= now.hour < 6:
-        api_key = "" # 08–12 BDT
-    elif 6 <= now.hour < 10:
-        api_key = "" # 12–16 BDT
-    elif 10 <= now.hour < 14:
-        api_key = "" # 16–20 BDT
-    elif 14 <= now.hour < 18:
-        api_key = "" # 20–24 BDT
-    else:
-        # Skip between 0–08 BDT
-        api_key = None
-
-    main(api_key)
-
-
+if __name__ == '__main__':
+    channel_ID = 'UCxHoBXkY88Tb8z1Ssj6CWsQ'
+    print(get_live_video_url(channel_ID))
