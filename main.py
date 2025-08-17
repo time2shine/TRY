@@ -102,5 +102,5 @@ channels = {
 }
 
 if __name__ == '__main__':
-    channel_ID = 'UCxHoBXkY88Tb8z1Ssj6CWsQ'
+    channel_ID = 'UCWVqdPTigfQ-cSNwG7O9MeA'
     print(get_live_video_url(channel_ID))
