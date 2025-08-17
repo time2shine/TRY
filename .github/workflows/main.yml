@@ -1,0 +1,55 @@
+name: YouTube Live Link Check
+
+on:
+  schedule:
+  # UTC times equivalent to 08:10, 12:10, 16:10, 20:10 in Bangladesh (UTC+6)
+    - cron: '10 2,6,10,14 * * *'
+  workflow_dispatch:      # Allows manual run
+
+jobs:
+  fetch-youtube:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install yt_dlp google-api-python-client
+
+    - name: Run script
+      env:
+        # Provide your API keys here, you can pass as one or multiple if your script handles it
+        YOUTUBE_API_1: ${{ secrets.YOUTUBE_API_1 }}
+        YOUTUBE_API_2: ${{ secrets.YOUTUBE_API_2 }}
+        YOUTUBE_API_3: ${{ secrets.YOUTUBE_API_3 }}
+        YOUTUBE_API_4: ${{ secrets.YOUTUBE_API_4 }}
+        YOUTUBE_API_5: ${{ secrets.YOUTUBE_API_5 }}
+        YOUTUBE_API_6: ${{ secrets.YOUTUBE_API_6 }}
+        YOUTUBE_API_7: ${{ secrets.YOUTUBE_API_7 }}
+        YOUTUBE_API_8: ${{ secrets.YOUTUBE_API_8 }}
+      run: |
+        python main.py
+
+    - name: Commit and push changes if updated
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add YT_playlist.m3u
+        # Only commit if there are changes
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          current_time=$(date +"%Y-%m-%d %H:%M:%S")
+          git commit -m "Updated m3u playlist via Action every 3 hours at $current_time"
+          git push
+        fi
