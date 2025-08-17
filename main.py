@@ -2,7 +2,6 @@ import random
 import yt_dlp
 import os
 import logging
-from Original import logger
 
 cookies_file_path = 'cookies.txt'
 
