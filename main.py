@@ -1,38 +1,11 @@
 import random
-import datetime
 import yt_dlp
 import os
-import time
 import logging
-from googleapiclient.discovery import build
-
-# Replace with your API key
-API_KEY = 'AIzaSyCgJaZsz-tsyAaIJRLc5NRYQyC-vnTCwAI'
-
-# Test channel ID (Google for Developers)
-CHANNEL_ID = 'UCWVqdPTigfQ-cSNwG7O9MeA'
-
-def get_channel_name(api_key, channel_id):
-    youtube = build('youtube', 'v3', developerKey=api_key)
-    
-    response = youtube.channels().list(
-        part='snippet',
-        id=channel_id
-    ).execute()
-    
-    if response['items']:
-        return response['items'][0]['snippet']['title']
-    return "Channel not found"
-
-# Test it
-channel_name = get_channel_name(API_KEY, CHANNEL_ID)
-print(f"Channel name: {channel_name}")
-
 
 # --- CONFIG ---
 cookies_file_path = 'cookies.txt'
-MAX_API_RETRIES = 1
-RETRY_WAIT_SECONDS = 3
+m3u_output = 'output.m3u'
 
 # --- LOGGING ---
 logging.basicConfig(
@@ -59,16 +32,12 @@ def get_user_agent():
     )
 
 
-def get_live_video_url(channel_id):
+def get_live_watch_url(channel_id):
+    """Return YouTube watch page URL if channel is live, otherwise None"""
     url = f"https://www.youtube.com/channel/{channel_id}/live"
     ydl_opts = {
-        'format': 'best',
         'cookiefile': cookies_file_path,
         'force_ipv4': True,
-        'retries': 10,
-        'fragment_retries': 10,
-        'skip_unavailable_fragments': True,
-        'extractor_args': {'youtube': {'skip': ['translated_subs']}},
         'http_headers': {
             'User-Agent': get_user_agent(),
             'Accept-Language': 'en-US,en;q=0.9',
@@ -76,21 +45,55 @@ def get_live_video_url(channel_id):
             'Sec-Fetch-Mode': 'navigate',
         },
         'quiet': True,
-        'no_warnings': True
+        'no_warnings': True,
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-        # If live video is active, yt-dlp gives info about that video
-        if info and 'url' in info:
-            return info['url']
-        # Sometimes info['entries'] contains the video list
-        if info and 'entries' in info and len(info['entries']) > 0:
-            return info['entries'][0]['url']
+        try:
+            info = ydl.extract_info(url, download=False)
+        except Exception as e:
+            logger.error(f"Failed to get info for {channel_id}: {e}")
+            return None
+
+        if not info:
+            return None
+
+        # ✅ Live video case
+        if info.get("is_live"):
+            return info.get("webpage_url") or f"https://www.youtube.com/watch?v={info['id']}"
+
+        # Sometimes in entries
+        if "entries" in info:
+            for entry in info["entries"]:
+                if entry.get("is_live"):
+                    return entry.get("webpage_url") or f"https://www.youtube.com/watch?v={entry['id']}"
+
     return None
 
 
-# Example channels dictionary (use your full list here)
+def save_m3u(channels, output_file):
+    """Save live channels to an M3U playlist (with watch links)"""
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write("#EXTM3U\n")
+
+        for channel_id, meta in channels.items():
+            logger.info(f"Checking {meta['channel_name']}...")
+            live_url = get_live_watch_url(channel_id)
+
+            if live_url:
+                logger.info(f"✅ LIVE: {meta['channel_name']}")
+                f.write(
+                    f'#EXTINF:-1 tvg-id="{channel_id}" '
+                    f'tvg-logo="{meta["channel_logo"]}" '
+                    f'group-title="{meta["group_title"]}",'
+                    f'{meta["channel_name"]}\n'
+                    f'{live_url}\n'
+                )
+            else:
+                logger.info(f"❌ Not live: {meta['channel_name']}")
+
+
+# --- Example channels dictionary ---
 channels = {
     'UCWVqdPTigfQ-cSNwG7O9MeA': {  # Somoy News
         'channel_number': 101,
@@ -98,9 +101,9 @@ channels = {
         'channel_name': 'Somoy News',
         'channel_logo': 'https://yt3.googleusercontent.com/7F-3_9yjPiMJzBAuD7niglcJmFyXCrFGSEugcEroFrIkxudmhiZ9i-Q_pW4Zrn2IiCLN5dQX8A=s160-c-k-c0x00ffffff-no-rj',
     },
-    # Add other channels as needed...
+    # Add more channels...
 }
 
 if __name__ == '__main__':
-    channel_ID = 'UCWVqdPTigfQ-cSNwG7O9MeA'
-    print(get_live_video_url(channel_ID))
+    save_m3u(channels, m3u_output)
+    logger.info(f"✅ Playlist saved to {m3u_output}")
