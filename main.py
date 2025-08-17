@@ -4,6 +4,30 @@ import yt_dlp
 import os
 import time
 import logging
+from googleapiclient.discovery import build
+
+# Replace with your API key
+API_KEY = 'YOUR_API_KEY_HERE'
+
+# Test channel ID (Google for Developers)
+CHANNEL_ID = 'UC_x5XG1OV2P6uZZ5FSM9Ttw'
+
+def get_channel_name(api_key, channel_id):
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    
+    response = youtube.channels().list(
+        part='snippet',
+        id=channel_id
+    ).execute()
+    
+    if response['items']:
+        return response['items'][0]['snippet']['title']
+    return "Channel not found"
+
+# Test it
+channel_name = get_channel_name(API_KEY, CHANNEL_ID)
+print(f"Channel name: {channel_name}")
+
 
 # --- CONFIG ---
 cookies_file_path = 'cookies.txt'
