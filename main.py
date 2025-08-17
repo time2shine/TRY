@@ -7,10 +7,10 @@ import logging
 from googleapiclient.discovery import build
 
 # Replace with your API key
-API_KEY = 'YOUR_API_KEY_HERE'
+API_KEY = 'AIzaSyCgJaZsz-tsyAaIJRLc5NRYQyC-vnTCwAI'
 
 # Test channel ID (Google for Developers)
-CHANNEL_ID = 'UC_x5XG1OV2P6uZZ5FSM9Ttw'
+CHANNEL_ID = 'UCWVqdPTigfQ-cSNwG7O9MeA'
 
 def get_channel_name(api_key, channel_id):
     youtube = build('youtube', 'v3', developerKey=api_key)
