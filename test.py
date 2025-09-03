@@ -2,12 +2,10 @@ import asyncio
 import urllib.parse
 from datetime import datetime
 from playwright.async_api import async_playwright
-import time
 
 URL = "https://www.distro.tv/live/shemaroo-bollywood/"
 LOG_FILE = "m3u8_changes.log"
-
-previous_link_file = "previous_link.txt"
+PREVIOUS_LINK_FILE = "previous_link.txt"
 
 async def get_m3u8():
     async with async_playwright() as p:
@@ -32,7 +30,7 @@ async def get_m3u8():
 
         context.on("request", handle_request)
         await page.goto(URL)
-        await page.wait_for_timeout(15000)
+        await page.wait_for_timeout(15000)  # wait for streams to load
         await browser.close()
 
         if m3u8_links:
@@ -42,15 +40,16 @@ async def get_m3u8():
         return None
 
 def log_message(message):
+    """Append log messages to the existing log file without deleting old logs."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {message}\n")
     print(f"[{timestamp}] {message}")
 
 async def monitor_once():
-    # Load previous link from file
+    # Load previous link from file if exists
     try:
-        with open(previous_link_file, "r") as f:
+        with open(PREVIOUS_LINK_FILE, "r") as f:
             previous_link = f.read().strip()
     except FileNotFoundError:
         previous_link = None
@@ -63,11 +62,12 @@ async def monitor_once():
             log_message(f"Link changed! New link: {current_link}")
         else:
             log_message("No change in link.")
-
+        
         # Save current link for next run
-        with open(previous_link_file, "w") as f:
+        with open(PREVIOUS_LINK_FILE, "w") as f:
             f.write(current_link)
     else:
         log_message("No link found this cycle.")
 
-asyncio.run(monitor_once())
+if __name__ == "__main__":
+    asyncio.run(monitor_once())
