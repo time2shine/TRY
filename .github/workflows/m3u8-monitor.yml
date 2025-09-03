@@ -2,16 +2,16 @@ name: M3U8 Monitor
 
 on:
   schedule:
-    # Every 30 minutes
+    # Run every 30 minutes
     - cron: "*/30 * * * *"
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   check_m3u8:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Set up Python
@@ -26,10 +26,10 @@ jobs:
         playwright install chromium
 
     - name: Run m3u8 monitor
-      run: python test.py
+      run: python monitor.py
 
     - name: Upload log as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: m3u8-log
         path: m3u8_changes.log
