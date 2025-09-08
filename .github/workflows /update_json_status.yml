@@ -1,9 +1,6 @@
 name: Check Channels Status
 
 on:
-  schedule:
-    # Runs every day at 3 AM Bangladesh time (UTC+6 = UTC-6 offset)
-    - cron: '21 21 * * *'  # 3 AM BDT is 21:00 UTC previous day
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
