@@ -1,0 +1,16 @@
+{
+  "BTV": {
+    "group": "Bangla",
+    "tvg_id": "akashaat.in",
+    "tvg_logo": "https://static.wikia.nocookie.net/etv-gspn-bangla/images/3/34/Aakash_Aath_logo_%282013%29.png",
+    "links": [
+      {
+        "url": "http://starshare.fun:8080/live/keerthi5599/superdeal34/998.ts",
+        "status": "offline",
+        "last_online": null,
+        "first_online": null,
+        "last_offline": "2025-09-03"
+      }
+    ]
+  }
+}
