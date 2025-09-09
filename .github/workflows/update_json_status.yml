@@ -32,7 +32,7 @@ jobs:
 
       - name: Run FFmpeg link check
         run: |
-          python static_channels_update.py  # Your Python script with parallel FFmpeg checks
+          python static_movies.py  # Your Python script with parallel FFmpeg checks
 
       - name: Commit updated JSON
         run: |
