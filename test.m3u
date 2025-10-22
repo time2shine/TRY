@@ -1,9 +1,15 @@
 #EXTM3U
-#EXTINF:-1, Fashion Finds
-https://qvc-amd-live.akamaized.net/hls/live/2034113/lsqvc5us/medhigh.m3u8
-#EXTINF:-1, In the Kitchen
-https://qvc-amd-live.akamaized.net/hls/live/2034113/lsqvc4us/medhigh.m3u8
-#EXTINF:-1, Me TV
-http://103.175.242.10:8080/metv/index.m3u8
-#EXTINF:-1, Tofan (2024)
-https://vhoichoi.viewlift.com/Renditions/20240918/1726653787189_88a8sna0ns9a8s7tf/hls/1726653787189_88a8sna0ns9a8s7tf.m3u8
+#EXTINF:-1, Jamuna TV
+http://103.175.242.10:8080/jamuna/index.m3u8
+#EXTINF:-1, Colors Cineplex HD
+https://cdn-2.pishow.tv/live/228/228_1.m3u8
+#EXTINF:-1, GLOBAL TV MUSIC
+https://stmv.video.gmpro.top/global/global/playlist.m3u8
+#EXTINF:-1, RT France
+https://rt-fra.rttv.com/live/rtfrance/playlist_4500Kb.m3u8
+#EXTINF:-1, Aljazeera HD Backup
+https://d1cy85syyhvqz5.cloudfront.net/v1/master/7b67fbda7ab859400a821e9aa0deda20ab7ca3d2/aljazeeraLive/AJE/index.m3u8
+#EXTINF:-1, Sharjah TV
+https://svs.itworkscdn.net/smc1live/smc1.smil/smc1publish/smc1tvhd_720p/chunks.m3u8
+#EXTINF:-1, Global Punjab
+https://server.livelegitpro.in/globalpunjab/globalpunjab/index.m3u8
